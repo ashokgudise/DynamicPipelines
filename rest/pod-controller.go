@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"dyna-pod-pipeline/replicator"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -35,6 +36,21 @@ func ProcessRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
 		return
 	}
+
+	// Pass the service values to the replicator
+	image := "your-docker-image:latest"
+	serviceName := "my-dynamic-service"
+	composeFilePath := "docker-compose.yml"
+
+	newContent, err := replicator.AddServiceToCompose(image, serviceName, composeFilePath)
+	
+	if(err != nil){
+		fmt.Println("Failed to create service file", err)
+		return
+	}
+
+	fmt.Println("Content Added \t", newContent)
+	
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
