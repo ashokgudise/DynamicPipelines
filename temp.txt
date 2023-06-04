@@ -1,0 +1,46 @@
+import java.lang.reflect.Field;
+
+public class FieldAccessUtil {
+
+    public static Object getField(Object obj, String fieldExpression) {
+        String[] fieldNames = fieldExpression.split("\\.");
+        return getFieldRecursive(obj, fieldNames, 0);
+    }
+
+    private static Object getFieldRecursive(Object obj, String[] fieldNames, int index) {
+        if (index >= fieldNames.length) {
+            return obj;
+        }
+
+        String fieldName = fieldNames[index];
+        Field field = getFieldByName(obj.getClass(), fieldName);
+
+        if (field == null) {
+            throw new IllegalArgumentException("Field '" + fieldName + "' not found in object " + obj.getClass().getName());
+        }
+
+        field.setAccessible(true);
+
+        try {
+            Object fieldValue = field.get(obj);
+            return getFieldRecursive(fieldValue, fieldNames, index + 1);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("Unable to access field '" + fieldName + "' in object " + obj.getClass().getName(), e);
+        }
+    }
+
+    private static Field getFieldByName(Class<?> clazz, String fieldName) {
+        try {
+            return clazz.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            // Field not found in this class
+        }
+
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+            return getFieldByName(superClass, fieldName);
+        }
+
+        return null;
+    }
+}
